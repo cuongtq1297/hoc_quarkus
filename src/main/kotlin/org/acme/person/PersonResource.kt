@@ -1,11 +1,7 @@
 package org.acme.person
 
 import jakarta.transaction.Transactional
-import jakarta.ws.rs.Consumes
-import jakarta.ws.rs.GET
-import jakarta.ws.rs.POST
-import jakarta.ws.rs.Path
-import jakarta.ws.rs.Produces
+import jakarta.ws.rs.*
 import jakarta.ws.rs.core.MediaType
 import org.acme.company.Company
 import org.acme.company.CompanyRepository
@@ -39,6 +35,11 @@ class PersonResource(
             }
     }
 
+    @GET
+    @Path("/search")
+    fun search(@QueryParam("companyName") companyName: String): List<Person> {
+        return personRepository.findByCompany(companyName)
+    }
     @POST
     @Transactional
     fun create(request: PersonRequest): String {
