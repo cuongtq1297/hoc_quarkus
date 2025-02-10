@@ -26,33 +26,80 @@ class PersonResource(
 //        }
 //        return personResList
         return personRepository.findAll().list().map { person ->
-                PersonResponse(
-                    name = person.name,
-                    age = person.age,
-                    companyName = person.company?.name,
-                    companyAddress = person.company?.address
-                )
-            }
+            PersonResponse(
+                name = person.name,
+                age = person.age,
+                companyName = person.company?.name,
+                companyAddress = person.company?.address
+            )
+        }
+    }
+
+    @GET
+    @Path("/v2")
+    fun findAllWithDTO(): List<PersonResponse> {
+        return personRepository.findAllWithDTO()
+    }
+
+    @GET
+    @Path("/searchByCompanyName")
+    fun searchByCompanyName(@QueryParam("companyName") companyName: String): List<PersonResponse> {
+        return personRepository.findByCompany(companyName).map { person ->
+            PersonResponse(
+                name = person.name,
+                age = person.age,
+                companyName = person.company?.name,
+                companyAddress = person.company?.address
+            )
+        }
     }
 
     @GET
     @Path("/search")
-    fun search(@QueryParam("companyName") companyName: String): List<Person> {
-        return personRepository.findByCompany(companyName)
+    fun search(
+        @QueryParam("name") name: String?,
+        @QueryParam("age") age: Int?,
+        @QueryParam("companyName") companyName: String?,
+        @QueryParam("companyAddress") companyAddress: String?
+    ): List<PersonResponse> {
+        return personRepository.findByOptionalParams(name, age, companyName, companyAddress).map { person ->
+            PersonResponse(
+                name = person.name,
+                age = person.age,
+                companyName = person.company?.name,
+                companyAddress = person.company?.address
+            )
+        }
     }
+
     @POST
     @Transactional
     fun create(request: PersonRequest): String {
         val company = companyRepository.findById(request.companyId)
-        if (company == null) {
-            return "Company not found"
-        } else {
-            val person = Person()
-            person.name = request.name
-            person.age = request.age
-            person.company = company
+        company?.let {
+            val person = Person().apply {
+                name = request.name
+                age = request.age
+                this.company = company
+            }
             personRepository.persist(person)
             return "Created Successfully"
+        } ?: run {
+            return "Company not found"
         }
+//        if (company == null) {
+//            return "Company not found"
+//        } else {
+//            val person = Person().apply {
+//                name = request.name
+//                age = request.age
+//                this.company = company
+//            }
+////            person.name = request.name
+////            person.age = request.age
+////            person.company = company
+//            personRepository.persist(person)
+//            return "Created Successfully"
+//        }
     }
 }
